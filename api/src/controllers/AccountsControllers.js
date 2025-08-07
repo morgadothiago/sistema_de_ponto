@@ -1,18 +1,53 @@
+import { PrismaClient } from "@prisma/client"
+import { hashPassword } from "../services/hashPassword.js"
+
+const prisma = new PrismaClient()
+
 export const AccontsControllers = {
   async create(req, res) {
     const { name, email, password, isOnline, provider } = req.body
 
-    const newData = {
-      name,
-      email,
-      password,
-      isOnline,
-      provider,
-    }
+    try {
+      const user = await prisma.user.findUnique({
+        where: {
+          email,
+        },
+      })
 
-    return res.status(200).json({ message: "Hello World", data: newData })
+      if (user) {
+        return res.status(400).json({ message: "User already exists" })
+      }
+
+      const newData = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: await hashPassword(password),
+          isOnline,
+          provider,
+        },
+      })
+
+      return res
+        .status(200)
+        .json({ message: "Account created successfully", data: newData })
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: "Error creating account", error: error.message })
+    }
   },
-  async users(req, res) {
-    return res.status(200).json({ message: "Hello World" })
+  async getUsers(req, res) {
+    try {
+      const users = await prisma.user.findMany()
+
+      return res
+        .status(200)
+        .json({ message: "Users fetched successfully", data: users })
+    } catch (error) {
+      return res
+        .status(500)
+        .json({ message: "Error fetching users", error: error.message })
+    }
   },
 }
