@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client"
 import { hashPassword } from "../services/hashPassword.js"
+import { v4 as uuidv4 } from "uuid"
 
 const prisma = new PrismaClient()
 
@@ -20,6 +21,7 @@ export const AccontsControllers = {
 
       const newData = await prisma.user.create({
         data: {
+          id: uuidv4(),
           name,
           email,
           password: await hashPassword(password),
